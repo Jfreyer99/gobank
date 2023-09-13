@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	//"fmt"
 )
 
 func main() {
@@ -9,18 +10,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	if err := store.Init(); err != nil{
-		log.Fatal(err)
-	}
-
-	account := &Account{
-		FirstName: "Vorname",
-		LastName: "Nachname",
-		Balance: 1000.56,
-	}
-	
-	if err := store.CreateAccount(account); err != nil{
 		log.Fatal(err)
 	}
 

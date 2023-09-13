@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
 	"github.com/gorilla/mux"
 )
 
@@ -54,7 +53,19 @@ func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) err
 }
 
 func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error{
-	return nil
+	createAccountRequest := &CreateAccountRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(createAccountRequest); err != nil{
+		return err
+	}
+
+	account := NewAccount(createAccountRequest.FirstName, createAccountRequest.LastName)
+	err:= s.store.CreateAccount(account)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(w, http.StatusOK, account)
 }
 
 func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) error{

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"time"
 	_ "github.com/lib/pq"
 )
 
@@ -23,7 +22,7 @@ type PostgresStore struct{
 	db *sql.DB
 }
 
-func NewPostgresStore() (*PostgresStore, error){
+func NewPostgresStore() (*PostgresStore, error) {
 	connStr := "user=postgres dbname=postgres password=gobank sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
@@ -65,31 +64,18 @@ func (s *PostgresStore) printAccountTable() error {
 	defer rows.Close()
 
 	accounts := make([]*Account, 0)
-	timestamps := make([]string, 0)
 
 	for rows.Next() {
-		var first_name string
-		var last_name string
-		var account_number int64
-		var account_id int
-		var balance float64
-		var created_at string
+		account := &Account{}
 
-		if err := rows.Scan(&account_id, &last_name, &first_name, &account_number, &balance, &created_at); err != nil {
-			// Check for a scan error.
-			// Query rows will be closed with defer.
+		if err := rows.Scan(
+			&account.ID, &account.LastName,
+			&account.FirstName, &account.Number,
+			&account.Balance, &account.CreatedAt); err != nil {
 			log.Fatal(err)
 		}
 
-		accounts = append(accounts, &Account{
-			ID: account_id,
-			FirstName: first_name,
-			LastName: last_name,
-			Number: account_number,
-			Balance: balance,
-		})
-
-		timestamps = append(timestamps, created_at)
+		accounts = append(accounts, account)
 	}
 
 	rerr := rows.Close()
@@ -103,19 +89,28 @@ func (s *PostgresStore) printAccountTable() error {
 	}
 
 	for i:=0; i < len(accounts); i++{
-		fmt.Printf("%+v%s\n", accounts[i], timestamps[i])
+		fmt.Printf("%+v\n", accounts[i])
 	}
-
 	return nil
 }
 
-
 func (s *PostgresStore) CreateAccount(a *Account) error{
-	_, err := s.db.Exec("INSERT INTO ACCOUNT(last_name, first_name, balance, created_at) VALUES($1,$2,$3,$4)",
-	a.LastName, a.FirstName, a.Balance, time.Now())
+
+	stmt, err := s.db.Prepare(
+	"INSERT INTO ACCOUNT(last_name, first_name, balance, created_at) VALUES($1,$2,$3,$4) RETURNING account_id, account_number")
 	 if err != nil{
 		return err
 	 }
+
+	 defer stmt.Close()
+
+	 err = stmt.QueryRow(
+		a.LastName,
+		a.FirstName,
+		a.Balance,
+		a.CreatedAt,
+	 ).Scan(&a.ID, &a.Number)
+
 	return nil
 }
 
