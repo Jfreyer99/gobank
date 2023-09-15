@@ -24,6 +24,8 @@ func NewAPIServer(listenAddr string, store Storage) *APIServer{
 func (s *APIServer) Run() {
 	router := mux.NewRouter()
 
+	// Using chi router seems to be more modern approach
+	
 	// Try organizing the code better by using subrouters to split those concerns apart
 	//subrouter := router.PathPrefix("/").Subrouter()
 	//getRoute := subrouter.HandleFunc("account", makeHTTPHandleFunc(s.handleAccount))
