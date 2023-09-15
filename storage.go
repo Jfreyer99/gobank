@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+
 	_ "github.com/lib/pq"
 )
 
@@ -104,12 +105,16 @@ func (s *PostgresStore) CreateAccount(a *Account) error{
 
 	 defer stmt.Close()
 
-	 err = stmt.QueryRow(
+	 reerr := stmt.QueryRow(
 		a.LastName,
 		a.FirstName,
 		a.Balance,
 		a.CreatedAt,
 	 ).Scan(&a.ID, &a.Number)
+
+	 if reerr != nil{
+		return reerr
+	 }
 
 	return nil
 }
@@ -123,7 +128,31 @@ func (s *PostgresStore) UpdateAccount(a *Account) error{
 }
 
 func (s *PostgresStore) GetAccountByID(id int) (*Account, error){
-	return nil, nil
+
+	stmt, err := s.db.Prepare("SELECT * FROM ACCOUNT WHERE account_id = $1")
+
+	if err != nil{
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	account := &Account{}
+
+	reerr := stmt.QueryRow(id).Scan(
+		&account.ID,
+		&account.LastName,
+		&account.FirstName,
+		&account.Number,
+		&account.Balance,
+		&account.CreatedAt,
+	)
+
+	if reerr != nil{
+		return nil, reerr
+	}
+
+	return account, nil
 }
 
 //----------------------------------------------------------------------------------

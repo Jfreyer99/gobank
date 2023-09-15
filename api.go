@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+
 	"github.com/gorilla/mux"
 )
 
@@ -20,9 +22,14 @@ func NewAPIServer(listenAddr string, store Storage) *APIServer{
 	}
 }
 
-func (s *APIServer) Run(){
+func (s *APIServer) Run() {
 	router := mux.NewRouter()
 
+	// Try organizing the code better by using subrouters to split those concerns apart
+	//subrouter := router.PathPrefix("/").Subrouter()
+	//getRoute := subrouter.HandleFunc("account", makeHTTPHandleFunc(s.handleAccount))
+
+	// Try improving by using HandleFunc().Method("Get") 
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleAccount))
 	router.HandleFunc("/account/{id}", makeHTTPHandleFunc(s.handleAccount))
 
@@ -46,10 +53,21 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error{
 
 func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) error{
 	//account := NewAccount("jonas", "ff")
-	id := mux.Vars(r)["id"]
+	idStr := mux.Vars(r)["id"]
 
-	fmt.Println(id)
-	return WriteJSON(w, http.StatusOK, &Account{})
+	id, err := strconv.Atoi(idStr)
+	if err != nil{
+		return err
+	}
+
+	//TODO getUser from store and pass it to WriteJson function
+	account, err := s.store.GetAccountByID(id)
+
+	if err != nil{
+		return WriteJSON(w, http.StatusNotFound, err)
+	}
+
+	return WriteJSON(w, http.StatusOK, account)
 }
 
 func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error{
