@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"sync"
 
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 //-------------------------------------------------------------------------------------------------------
@@ -21,11 +22,13 @@ type Storage interface{
 // Contains struct PostgresStore which implements Storage interface
 type PostgresStore struct{
 	db *sql.DB
+	mu sync.Mutex
 }
 
 func NewPostgresStore() (*PostgresStore, error) {
-	connStr := "user=postgres dbname=postgres password=gobank sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
+	//connStr := "user=postgres dbname=postgres password=gobank sslmode=disable"
+	connStr := "postgresql://postgres:gobank@localhost:5432/postgres?sslmode=disable"
+	db, err := sql.Open("pgx", connStr)
 	if err != nil {
 		return nil, err
 	}
@@ -37,6 +40,15 @@ func NewPostgresStore() (*PostgresStore, error) {
 	return &PostgresStore{
 		db: db,
 	}, nil
+}
+
+func (s *PostgresStore) Close() {
+    s.mu.Lock()
+    defer s.mu.Unlock()
+    if s.db != nil {
+        s.db.Close()
+        s.db = nil
+    }
 }
 
 func (s *PostgresStore) Init() error{
@@ -120,6 +132,23 @@ func (s *PostgresStore) CreateAccount(a *Account) error{
 }
 
 func (s *PostgresStore) DeleteAccount(id int) error{
+
+	stmt, err := s.db.Prepare(
+	"DELETE FROM ACCOUNT WHERE account_id = $1 RETURNING account_id")
+	if err != nil{
+		return err
+	}
+	
+	defer stmt.Close()
+
+	var account_id int
+
+	reerr := stmt.QueryRow(id).Scan(&account_id)
+
+	if reerr != nil{
+		return reerr
+	}
+
 	return nil
 }
 

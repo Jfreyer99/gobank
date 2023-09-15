@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
 	"github.com/gorilla/mux"
 )
 
@@ -86,7 +85,26 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 	return WriteJSON(w, http.StatusOK, account)
 }
 
+
 func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) error{
+
+	idStr := mux.Vars(r)["id"]
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil{
+		return err
+	}
+
+	if id < 1{
+		return fmt.Errorf("Cannot Delete Account with ID less than 1")
+	}
+
+	rerr := s.store.DeleteAccount(id)
+
+	if rerr != nil{
+	 	return rerr
+	}
+
 	return nil
 }
 

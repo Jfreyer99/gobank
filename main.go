@@ -14,6 +14,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	defer store.Close()
+
 	if err := store.printAccountTable(); err != nil{
 		log.Fatal(err)
 	}
