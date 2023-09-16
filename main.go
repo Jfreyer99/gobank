@@ -16,9 +16,9 @@ func main() {
 
 	defer store.Close()
 
-	if err := store.printAccountTable(); err != nil{
-		log.Fatal(err)
-	}
+	// if err := store.printAccountTable(); err != nil{
+	// 	log.Fatal(err)
+	// }
 
 	//fmt.Printf("no error so far")
 

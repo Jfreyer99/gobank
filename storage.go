@@ -85,8 +85,9 @@ func (s *PostgresStore) printAccountTable() error {
 		if err := rows.Scan(
 			&account.ID, &account.LastName,
 			&account.FirstName, &account.Number,
-			&account.Balance, &account.CreatedAt); err != nil {
-			log.Fatal(err)
+			&account.Balance, &account.CreatedAt); 
+			err != nil {
+			return err
 		}
 
 		accounts = append(accounts, account)
@@ -135,19 +136,26 @@ func (s *PostgresStore) CreateAccount(a *Account) error{
 func (s *PostgresStore) DeleteAccount(id int) error{
 
 	stmt, err := s.db.Prepare(
-	"DELETE FROM ACCOUNT WHERE account_id = $1 RETURNING account_id")
+	"DELETE FROM ACCOUNT WHERE account_id = $1")
 	if err != nil{
 		return err
 	}
 	
 	defer stmt.Close()
 
-	var account_id int
+	res, err := stmt.Exec(id)
 
-	reerr := stmt.QueryRow(id).Scan(&account_id)
+	if err != nil{
+		return err
+	}
 
-	if reerr != nil{
-		return reerr
+	numDeleted, err := res.RowsAffected()
+	if err != nil{
+		return err
+	}
+
+	if numDeleted <= 0{
+		return fmt.Errorf("Now rows were deleted")
 	}
 
 	return nil
@@ -159,6 +167,8 @@ func (s *PostgresStore) UpdateAccount(a *Account) error{
 
 func (s *PostgresStore) GetAccountByID(id int) (*Account, error){
 
+
+	//Cache the stmt somewhere
 	stmt, err := s.db.Prepare("SELECT * FROM ACCOUNT WHERE account_id = $1")
 
 	if err != nil{
@@ -186,7 +196,43 @@ func (s *PostgresStore) GetAccountByID(id int) (*Account, error){
 }
 
 func (s *PostgresStore) GetAccounts() ([]*Account, error){
-	return nil, fmt.Errorf("Not implemented yet")
+
+
+	stmt, err := s.db.Prepare("SELECT * FROM ACCOUNT")
+
+	if err != nil {
+		return nil, err
+	}
+
+	rows, errQ := stmt.Query()
+
+	if err != nil{
+		return nil, errQ
+	}
+
+	accounts := make([]*Account, 0)
+
+	for rows.Next(){
+
+		account := &Account{}
+
+		if err := rows.Scan(
+			&account.ID,
+			&account.LastName,
+			&account.FirstName,
+			&account.Number,
+			&account.Balance,
+			&account.CreatedAt,
+		); err != nil{
+			return nil, err
+		}
+
+		accounts = append(accounts, account)
+
+	}
+
+
+	return accounts, nil
 }
 
 //----------------------------------------------------------------------------------

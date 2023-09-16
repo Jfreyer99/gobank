@@ -31,28 +31,22 @@ func (s *APIServer) Run() {
 	//getRoute := subrouter.HandleFunc("account", makeHTTPHandleFunc(s.handleAccount))
 
 	// Try improving by using HandleFunc().Method("Get") 
-	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleAccount))
-	router.HandleFunc("/account/{id}", makeHTTPHandleFunc(s.handleAccount))
+	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleGetAccount)).Methods(http.MethodGet)
+
+	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleCreateAccount)).Methods(http.MethodPost)
+
+	router.HandleFunc("/account/{id}", 
+	makeHTTPHandleFunc(s.handleGetAccountByID)).Methods(http.MethodGet)
+
+	router.HandleFunc("/account/{id}", 
+	makeHTTPHandleFunc(s.handleDeleteAccount)).Methods(http.MethodDelete)
 
 	log.Println("JSON API Running on Port: ", s.listenAddr)
+	
 	http.ListenAndServe(s.listenAddr, router)
 }
 
-func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error{
-	if r.Method == "GET" {
-		return s.handleGetAccount(w,r)
-	}
-	if r.Method == "POST" {
-		return s.handleCreateAccount(w,r)
-	}	
-	if r.Method == "DELETE" {
-		return s.handleDeleteAccount(w,r)
-	}
-
-	return fmt.Errorf("method not allowed: %s", r.Method)
-}
-
-func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) error{
+func (s *APIServer) handleGetAccountByID(w http.ResponseWriter, r *http.Request) error{
 	//account := NewAccount("jonas", "ff")
 	idStr := mux.Vars(r)["id"]
 
@@ -61,14 +55,24 @@ func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) err
 		return err
 	}
 
-	//TODO getUser from store and pass it to WriteJson function
 	account, err := s.store.GetAccountByID(id)
+
+	if err != nil{
+		return err
+	}
+
+	return WriteJSON(w, http.StatusOK, account)
+}
+
+func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) error{
+
+	accounts, err := s.store.GetAccounts()
 
 	if err != nil{
 		return WriteJSON(w, http.StatusNotFound, err)
 	}
 
-	return WriteJSON(w, http.StatusOK, account)
+	return WriteJSON(w, http.StatusOK, accounts)
 }
 
 func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error{
