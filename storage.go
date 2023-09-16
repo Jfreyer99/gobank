@@ -53,6 +53,10 @@ func (s *PostgresStore) Close() {
 }
 
 func (s *PostgresStore) Init() error{
+
+	if err := s.CreateAccountNumberSequence(); err != nil{
+		return err
+	}
 	return s.CreateAccountTable()
 }
 
@@ -62,12 +66,49 @@ func (s *PostgresStore) CreateAccountTable() error{
 		account_id SERIAL PRIMARY KEY,
 		last_name VARCHAR(30) NOT NULL,
 		first_name VARCHAR(30) NOT NULL,
-		account_number SERIAL NOT NULL,
+		account_number integer DEFAULT nextval('account_account_number_seq'),
 		balance	REAL,
 		created_at TIMESTAMP NOT NULL
 	);`
 	_, err := s.db.Exec(query)
+
 	return err
+}
+
+func (s *PostgresStore) DropTableAccount() error{
+
+	stmt, err := s.db.Prepare(`DROP TABLE IF EXISTS ACCOUNT`)
+	if err != nil{
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec()
+	if err != nil{
+		return err
+	}
+
+	return nil
+}
+
+func (s *PostgresStore) CreateAccountNumberSequence() error{
+
+	stmt, err := s.db.Prepare(
+	`CREATE SEQUENCE IF NOT EXISTS account_account_number_seq
+	START 10000;`)
+	if err != nil{
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec()
+	if err != nil{
+		return err
+	}
+
+	return nil
 }
 
 func (s *PostgresStore) printAccountTable() error {
@@ -178,7 +219,6 @@ func (s *PostgresStore) GetAccountByID(id int) (*Account, error){
 	defer stmt.Close()
 
 	account := &Account{}
-
 	reerr := stmt.QueryRow(id).Scan(
 		&account.ID,
 		&account.LastName,
