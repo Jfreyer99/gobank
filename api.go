@@ -36,11 +36,11 @@ func (s *APIServer) Run() {
 
 	// Try improving by using HandleFunc().Method("Get")
 
-	router.HandleFunc("/account", WithJWTAuth(makeHTTPHandleFunc(s.handleGetAccount))).Methods(http.MethodGet)
+	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleGetAccount)).Methods(http.MethodGet)
 
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleCreateAccount)).Methods(http.MethodPost)
 
-	router.HandleFunc("/account/{id}", WithJWTAuth(makeHTTPHandleFunc(s.handleGetAccountByID))).Methods(http.MethodGet)
+	router.HandleFunc("/account/{id}", WithJWTAuth(makeHTTPHandleFunc(s.handleGetAccountByID), s.store)).Methods(http.MethodGet)
 
 	router.HandleFunc("/transfer",
 		makeHTTPHandleFunc(s.handleTransfer)).Methods(http.MethodPost)
@@ -55,12 +55,7 @@ func (s *APIServer) Run() {
 
 func (s *APIServer) handleGetAccountByID(w http.ResponseWriter, r *http.Request) error {
 	//account := NewAccount("jonas", "ff")
-	idStr := mux.Vars(r)["id"]
-
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		return err
-	}
+	id := GetID(r)
 
 	account, err := s.store.GetAccountByID(id)
 
@@ -143,16 +138,40 @@ func (s *APIServer) handleTransfer(w http.ResponseWriter, r *http.Request) error
 //			JWT VALIDATION AND CREATION FOR NEW ACCOUNTS
 //------------------------------------------------------------------------------------------
 
-func WithJWTAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
+func WithJWTAuth(handlerFunc http.HandlerFunc, store Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Calling JWT Auth Middleware")
 
 		tokenString := r.Header.Get("x-jwt-token")
-
-		_, err := ValidateJWT(tokenString)
+		token, err := ValidateJWT(tokenString)
 
 		if err != nil{
-			WriteJSON(w, http.StatusForbidden, ApiError{Error: "invalid token provided"})
+			PermissionDenied(w)
+			return
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok || !token.Valid {
+			PermissionDenied(w)
+			return
+		}
+
+		claimIDStr := claims["jti"].(string)
+		claimID, err := strconv.Atoi(claimIDStr)
+		if err != nil{
+			PermissionDenied(w)
+			return
+		}
+
+		account, err := store.GetAccountByID(claimID)
+		if err != nil {
+			PermissionDenied(w)
+			return
+		}
+
+		id := GetID(r)
+		if id != account.ID {
+			PermissionDenied(w)
 			return
 		}
 
@@ -217,3 +236,23 @@ func makeHTTPHandleFunc(f apiFunc) http.HandlerFunc {
 
 
 //----------------------------------------------------------------------------------------------------------
+
+
+// Extracted Functions
+// ---------------------------------------------------------------------------------------------------------
+
+func GetID(r *http.Request) int {
+	idStr := mux.Vars(r)["id"]
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return -1
+	}
+	return id
+}
+
+func PermissionDenied(w http.ResponseWriter){
+	WriteJSON(w, http.StatusBadRequest, ApiError{Error: "permission denied"})
+}
+
+// ---------------------------------------------------------------------------------------------------------
