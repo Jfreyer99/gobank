@@ -57,18 +57,37 @@ func (s *PostgresStore) Init() error{
 	if err := s.CreateAccountNumberSequence(); err != nil{
 		return err
 	}
+	if err := s.CreateUserAccountTable(); err != nil{
+		return err
+	}
 	return s.CreateAccountTable()
 }
 
 func (s *PostgresStore) CreateAccountTable() error{
 	query := `
 		CREATE TABLE IF NOT EXISTS ACCOUNT (
-		account_id SERIAL PRIMARY KEY,
+		account_id INT GENERATED ALWAYS AS IDENTITY,
 		last_name VARCHAR(30) NOT NULL,
 		first_name VARCHAR(30) NOT NULL,
 		account_number integer DEFAULT nextval('account_account_number_seq'),
 		balance	REAL,
-		created_at TIMESTAMP NOT NULL
+		created_at TIMESTAMP NOT NULL,
+		constraint PK_ACCOUNT_TABLE PRIMARY KEY (account_id, account_number),
+		CONSTRAINT fk_user FOREIGN KEY(account_id) REFERENCES USERACCOUNT(account_id)
+	);`
+	_, err := s.db.Exec(query)
+
+	return err
+}
+
+func (s *PostgresStore) CreateUserAccountTable() error{
+	query := `
+		CREATE TABLE IF NOT EXISTS USERACCOUNT (
+		account_id INT GENERATED ALWAYS AS IDENTITY,
+		email VARCHAR(70) NOT NULL,
+		passhash VARCHAR(100) NOT NULL,
+		salthash VARCHAR(100) NOT NULL,
+		PRIMARY KEY(account_id)
 	);`
 	_, err := s.db.Exec(query)
 
@@ -236,7 +255,6 @@ func (s *PostgresStore) GetAccountByID(id int) (*Account, error){
 }
 
 func (s *PostgresStore) GetAccounts() ([]*Account, error){
-
 
 	stmt, err := s.db.Prepare("SELECT * FROM ACCOUNT")
 

@@ -36,6 +36,8 @@ func (s *APIServer) Run() {
 
 	// Try improving by using HandleFunc().Method("Get")
 
+	router.HandleFunc("/login", makeHTTPHandleFunc(s.handleLogin)).Methods(http.MethodGet)
+
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleGetAccount)).Methods(http.MethodGet)
 
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleCreateAccount)).Methods(http.MethodPost)
@@ -64,6 +66,11 @@ func (s *APIServer) handleGetAccountByID(w http.ResponseWriter, r *http.Request)
 	}
 
 	return WriteJSON(w, http.StatusOK, account)
+}
+
+
+func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error{
+	return nil
 }
 
 func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) error {
