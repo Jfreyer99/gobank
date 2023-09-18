@@ -259,7 +259,7 @@ func GetID(r *http.Request) int {
 }
 
 func PermissionDenied(w http.ResponseWriter){
-	WriteJSON(w, http.StatusBadRequest, ApiError{Error: "permission denied"})
+	WriteJSON(w, http.StatusForbidden, ApiError{Error: "permission denied"})
 }
 
 // ---------------------------------------------------------------------------------------------------------
