@@ -12,7 +12,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := store.Init(); err != nil{
+	if err := store.Init(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -25,7 +25,6 @@ func main() {
 	server := NewAPIServer(":3000", store)
 	server.Run()
 }
-
 
 // Function used for generating JWT_SECRET env variable n >= 50
 func GenerateRandomString(n int) (string, error) {

@@ -9,9 +9,9 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-//-------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------
 // Contains only defintion of Storage interface
-type Storage interface{
+type Storage interface {
 	CreateAccount(*Account) error
 	DeleteAccount(int) error
 	UpdateAccount(*Account) error
@@ -21,7 +21,7 @@ type Storage interface{
 
 // ---------------------------------------------------------------------------------------------------
 // Contains struct PostgresStore which implements Storage interface
-type PostgresStore struct{
+type PostgresStore struct {
 	db *sql.DB
 	mu sync.Mutex
 }
@@ -34,7 +34,7 @@ func NewPostgresStore() (*PostgresStore, error) {
 		return nil, err
 	}
 
-	if err := db.Ping(); err != nil{
+	if err := db.Ping(); err != nil {
 		return nil, err
 	}
 
@@ -44,26 +44,26 @@ func NewPostgresStore() (*PostgresStore, error) {
 }
 
 func (s *PostgresStore) Close() {
-    s.mu.Lock()
-    defer s.mu.Unlock()
-    if s.db != nil {
-        s.db.Close()
-        s.db = nil
-    }
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.db != nil {
+		s.db.Close()
+		s.db = nil
+	}
 }
 
-func (s *PostgresStore) Init() error{
+func (s *PostgresStore) Init() error {
 
-	if err := s.CreateAccountNumberSequence(); err != nil{
+	if err := s.CreateAccountNumberSequence(); err != nil {
 		return err
 	}
-	if err := s.CreateUserAccountTable(); err != nil{
+	if err := s.CreateUserAccountTable(); err != nil {
 		return err
 	}
 	return s.CreateAccountTable()
 }
 
-func (s *PostgresStore) CreateAccountTable() error{
+func (s *PostgresStore) CreateAccountTable() error {
 	query := `
 		CREATE TABLE IF NOT EXISTS ACCOUNT (
 		account_id INT GENERATED ALWAYS AS IDENTITY,
@@ -80,7 +80,7 @@ func (s *PostgresStore) CreateAccountTable() error{
 	return err
 }
 
-func (s *PostgresStore) CreateUserAccountTable() error{
+func (s *PostgresStore) CreateUserAccountTable() error {
 	query := `
 		CREATE TABLE IF NOT EXISTS USERACCOUNT (
 		account_id INT GENERATED ALWAYS AS IDENTITY,
@@ -94,36 +94,36 @@ func (s *PostgresStore) CreateUserAccountTable() error{
 	return err
 }
 
-func (s *PostgresStore) DropTableAccount() error{
+func (s *PostgresStore) DropTableAccount() error {
 
 	stmt, err := s.db.Prepare(`DROP TABLE IF EXISTS ACCOUNT`)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	defer stmt.Close()
 
 	_, err = stmt.Exec()
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *PostgresStore) CreateAccountNumberSequence() error{
+func (s *PostgresStore) CreateAccountNumberSequence() error {
 
 	stmt, err := s.db.Prepare(
-	`CREATE SEQUENCE IF NOT EXISTS account_account_number_seq
+		`CREATE SEQUENCE IF NOT EXISTS account_account_number_seq
 	START 10000;`)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	defer stmt.Close()
 
 	_, err = stmt.Exec()
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -132,7 +132,7 @@ func (s *PostgresStore) CreateAccountNumberSequence() error{
 
 func (s *PostgresStore) printAccountTable() error {
 	rows, err := s.db.Query("SELECT * FROM ACCOUNT")
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -145,8 +145,7 @@ func (s *PostgresStore) printAccountTable() error {
 		if err := rows.Scan(
 			&account.ID, &account.LastName,
 			&account.FirstName, &account.Number,
-			&account.Balance, &account.CreatedAt); 
-			err != nil {
+			&account.Balance, &account.CreatedAt); err != nil {
 			return err
 		}
 
@@ -163,75 +162,74 @@ func (s *PostgresStore) printAccountTable() error {
 		log.Fatal(err)
 	}
 
-	for i:=0; i < len(accounts); i++{
+	for i := 0; i < len(accounts); i++ {
 		fmt.Printf("%+v\n", accounts[i])
 	}
 	return nil
 }
 
-func (s *PostgresStore) CreateAccount(a *Account) error{
+func (s *PostgresStore) CreateAccount(a *Account) error {
 
 	stmt, err := s.db.Prepare(
-	"INSERT INTO ACCOUNT(last_name, first_name, balance, created_at) VALUES($1,$2,$3,$4) RETURNING account_id, account_number")
-	 if err != nil{
+		"INSERT INTO ACCOUNT(last_name, first_name, balance, created_at) VALUES($1,$2,$3,$4) RETURNING account_id, account_number")
+	if err != nil {
 		return err
-	 }
+	}
 
-	 defer stmt.Close()
+	defer stmt.Close()
 
-	 reerr := stmt.QueryRow(
+	reerr := stmt.QueryRow(
 		a.LastName,
 		a.FirstName,
 		a.Balance,
 		a.CreatedAt,
-	 ).Scan(&a.ID, &a.Number)
+	).Scan(&a.ID, &a.Number)
 
-	 if reerr != nil{
+	if reerr != nil {
 		return reerr
-	 }
+	}
 
 	return nil
 }
 
-func (s *PostgresStore) DeleteAccount(id int) error{
+func (s *PostgresStore) DeleteAccount(id int) error {
 
 	stmt, err := s.db.Prepare(
-	"DELETE FROM ACCOUNT WHERE account_id = $1")
-	if err != nil{
+		"DELETE FROM ACCOUNT WHERE account_id = $1")
+	if err != nil {
 		return err
 	}
-	
+
 	defer stmt.Close()
 
 	res, err := stmt.Exec(id)
 
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	numDeleted, err := res.RowsAffected()
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
-	if numDeleted <= 0{
-		return fmt.Errorf("Now rows were deleted")
+	if numDeleted <= 0 {
+		return fmt.Errorf("now rows were deleted")
 	}
 
 	return nil
 }
 
-func (s *PostgresStore) UpdateAccount(a *Account) error{
+func (s *PostgresStore) UpdateAccount(a *Account) error {
 	return nil
 }
 
-func (s *PostgresStore) GetAccountByID(id int) (*Account, error){
-
+func (s *PostgresStore) GetAccountByID(id int) (*Account, error) {
 
 	//Cache the stmt somewhere
 	stmt, err := s.db.Prepare("SELECT * FROM ACCOUNT WHERE account_id = $1")
 
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -247,14 +245,14 @@ func (s *PostgresStore) GetAccountByID(id int) (*Account, error){
 		&account.CreatedAt,
 	)
 
-	if reerr != nil{
+	if reerr != nil {
 		return nil, reerr
 	}
 
 	return account, nil
 }
 
-func (s *PostgresStore) GetAccounts() ([]*Account, error){
+func (s *PostgresStore) GetAccounts() ([]*Account, error) {
 
 	stmt, err := s.db.Prepare("SELECT * FROM ACCOUNT")
 
@@ -264,13 +262,13 @@ func (s *PostgresStore) GetAccounts() ([]*Account, error){
 
 	rows, errQ := stmt.Query()
 
-	if err != nil{
+	if err != nil {
 		return nil, errQ
 	}
 
 	accounts := make([]*Account, 0)
 
-	for rows.Next(){
+	for rows.Next() {
 
 		account := &Account{}
 
@@ -281,14 +279,13 @@ func (s *PostgresStore) GetAccounts() ([]*Account, error){
 			&account.Number,
 			&account.Balance,
 			&account.CreatedAt,
-		); err != nil{
+		); err != nil {
 			return nil, err
 		}
 
 		accounts = append(accounts, account)
 
 	}
-
 
 	return accounts, nil
 }
