@@ -3,7 +3,7 @@ Simple example of creating an API with GO while using minimal amount of libaries
 
 # HOW TO USE
 ## SET THE JWT_SECRET
-Before starting must set the environment variable JWT_SECRET
+Before starting must set the environment variable JWT_SECRET by typing `export JWT_SECRET="your_secret_goes_in_here"`
 ## MAKE POSTGRES AND PGADMIN4 WORK WITH USING DOCKER
 Make sure docker is installed then **cd** into the folder where the **docker-compose.yml** is located
 Run `docker compose up -d` to pull and start the containers
