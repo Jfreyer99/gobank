@@ -23,4 +23,4 @@ Make sure to disable SSL for the moment as its not configured at the moment
 `cd` into the project folder and run the app with `make run`
 
 
-SUBJECT TO CHANGE
+SUBJECT TO CHANGE more changes
