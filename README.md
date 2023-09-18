@@ -10,7 +10,14 @@ Run `docker compose up -d` to pull and start the containers
 
 ## CONFIGURING PGADMIN4 AND POSTGRES
 Open the browser and type in **localhost:5050**
+
 Login in with the credentials provided to the container inside the **docker-compose.yml** for pgadmin
+
 Than add a server with the credentials provided inside the **docker-compose.yml** for db
+
 For the filed **IP-Adress** type in the name of the postgres container **postgres_container**
+
 Make sure to disable SSL for the moment as its not configured at the moment
+
+## RUN THE GO APPLICATION
+`cd` into the project folder and run the app with `make run`
