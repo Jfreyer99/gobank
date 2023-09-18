@@ -171,7 +171,8 @@ func (s *PostgresStore) printAccountTable() error {
 func (s *PostgresStore) CreateAccount(a *Account) error {
 
 	stmt, err := s.db.Prepare(
-		"INSERT INTO ACCOUNT(last_name, first_name, balance, created_at) VALUES($1,$2,$3,$4) RETURNING account_id, account_number")
+		`INSERT INTO ACCOUNT(last_name, first_name, balance, created_at) 
+		VALUES($1,$2,$3,$4) RETURNING account_id, account_number`)
 	if err != nil {
 		return err
 	}

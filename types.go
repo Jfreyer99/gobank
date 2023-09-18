@@ -6,31 +6,30 @@ import (
 
 type CreateTransferRequest struct {
 	ToAccount int `json:"toAccount"`
-	Amount int `json:"amount"`
+	Amount    int `json:"amount"`
 }
 
-type CreateAccountRequest struct{
+type CreateAccountRequest struct {
 	FirstName string `json:"firstName"`
-	LastName string `json:"lastName"`
+	LastName  string `json:"lastName"`
 }
 
 type Account struct {
-	ID int `json:"id"`
-	FirstName string `json:"firstName"`
-	LastName string `json:"lastName"`
-	Number int64 `json:"number"`
-	Balance float64 `json:"balance"`
+	ID        int       `json:"id"`
+	FirstName string    `json:"firstName"`
+	LastName  string    `json:"lastName"`
+	Number    int64     `json:"number"`
+	Balance   float64   `json:"balance"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-type LoginRequest struct{
-
+type LoginRequest struct {
 }
 
-func NewAccount(firstName, lastName string) *Account{
+func NewAccount(firstName, lastName string) *Account {
 	return &Account{
 		FirstName: firstName,
-		LastName: lastName,
+		LastName:  lastName,
 		CreatedAt: time.Now().UTC(),
 	}
 }

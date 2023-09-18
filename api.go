@@ -68,8 +68,7 @@ func (s *APIServer) handleGetAccountByID(w http.ResponseWriter, r *http.Request)
 	return WriteJSON(w, http.StatusOK, account)
 }
 
-
-func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error{
+func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
@@ -100,7 +99,7 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 	}
 
 	tokenString, err := CreateJWT(account)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -118,7 +117,7 @@ func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if id < 1 {
-		return fmt.Errorf("Cannot Delete Account with ID less than 1")
+		return fmt.Errorf("cannot Delete Account with ID less than 1")
 	}
 
 	rerr := s.store.DeleteAccount(id)
@@ -152,7 +151,7 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store Storage) http.HandlerFunc {
 		tokenString := r.Header.Get("x-jwt-token")
 		token, err := ValidateJWT(tokenString)
 
-		if err != nil{
+		if err != nil {
 			PermissionDenied(w)
 			return
 		}
@@ -165,7 +164,7 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store Storage) http.HandlerFunc {
 
 		claimIDStr := claims["jti"].(string)
 		claimID, err := strconv.Atoi(claimIDStr)
-		if err != nil{
+		if err != nil {
 			PermissionDenied(w)
 			return
 		}
@@ -186,7 +185,7 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store Storage) http.HandlerFunc {
 	}
 }
 
-func CreateJWT(account *Account) (string, error){
+func CreateJWT(account *Account) (string, error) {
 
 	secret := os.Getenv("JWT_SECRET")
 
@@ -194,9 +193,9 @@ func CreateJWT(account *Account) (string, error){
 
 	claims := &jwt.RegisteredClaims{
 		ExpiresAt: &jwt.NumericDate{Time: time.Now().Add(time.Hour * 24).UTC()},
-		IssuedAt: &jwt.NumericDate{Time: time.Now().UTC()},
+		IssuedAt:  &jwt.NumericDate{Time: time.Now().UTC()},
 		Issuer:    "GoBank",
-		ID: strconv.Itoa(account.ID),
+		ID:        strconv.Itoa(account.ID),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -204,12 +203,12 @@ func CreateJWT(account *Account) (string, error){
 }
 
 func ValidateJWT(tokenString string) (*jwt.Token, error) {
-	
+
 	secret := os.Getenv("JWT_SECRET")
 
 	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
 		return []byte(secret), nil
@@ -241,9 +240,7 @@ func makeHTTPHandleFunc(f apiFunc) http.HandlerFunc {
 	}
 }
 
-
 //----------------------------------------------------------------------------------------------------------
-
 
 // Extracted Functions
 // ---------------------------------------------------------------------------------------------------------
@@ -258,7 +255,7 @@ func GetID(r *http.Request) int {
 	return id
 }
 
-func PermissionDenied(w http.ResponseWriter){
+func PermissionDenied(w http.ResponseWriter) {
 	WriteJSON(w, http.StatusForbidden, ApiError{Error: "permission denied"})
 }
 
