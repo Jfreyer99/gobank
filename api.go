@@ -83,6 +83,7 @@ func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) err
 	return WriteJSON(w, http.StatusOK, accounts)
 }
 
+// Refactor and dont create JWT here only in Route handleCreateUserAccount
 func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error {
 	createAccountRequest := &CreateAccountRequest{}
 

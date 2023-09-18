@@ -12,6 +12,12 @@ import (
 // -------------------------------------------------------------------------------------------------------
 // Contains only defintion of Storage interface
 type Storage interface {
+	CreateUserAccount(*UserAccount) error
+	DeleteUserAccount(int) error
+	UpdateUserAccount(*UserAccount) error
+	GetUserAccountByID(int) (*UserAccount, error)
+	GetUserAccounts() ([]*UserAccount, error)
+
 	CreateAccount(*Account) error
 	DeleteAccount(int) error
 	UpdateAccount(*Account) error
@@ -19,12 +25,15 @@ type Storage interface {
 	GetAccounts() ([]*Account, error)
 }
 
-// ---------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------
 // Contains struct PostgresStore which implements Storage interface
 type PostgresStore struct {
 	db *sql.DB
 	mu sync.Mutex
 }
+
+//	Postgres Specific Setup
+//----------------------------------------------------------------------------------------------------------
 
 func NewPostgresStore() (*PostgresStore, error) {
 	//connStr := "user=postgres dbname=postgres password=gobank sslmode=disable"
@@ -66,7 +75,7 @@ func (s *PostgresStore) Init() error {
 func (s *PostgresStore) CreateAccountTable() error {
 	query := `
 		CREATE TABLE IF NOT EXISTS ACCOUNT (
-		account_id INT GENERATED ALWAYS AS IDENTITY,
+		account_id INT NOT NULL,
 		last_name VARCHAR(30) NOT NULL,
 		first_name VARCHAR(30) NOT NULL,
 		account_number integer DEFAULT nextval('account_account_number_seq'),
@@ -157,7 +166,6 @@ func (s *PostgresStore) printAccountTable() error {
 		log.Fatal(rerr)
 	}
 
-	// Rows.Err will report the last error encountered by Rows.Scan.
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
@@ -167,6 +175,11 @@ func (s *PostgresStore) printAccountTable() error {
 	}
 	return nil
 }
+
+//----------------------------------------------------------------------------------------------------------
+
+// Implementation of Account Methods of Interface Storage
+//----------------------------------------------------------------------------------------------------------
 
 func (s *PostgresStore) CreateAccount(a *Account) error {
 
@@ -292,3 +305,28 @@ func (s *PostgresStore) GetAccounts() ([]*Account, error) {
 }
 
 //----------------------------------------------------------------------------------
+
+// Implementation of Account Methods of Interface Storage
+//----------------------------------------------------------------------------------------------------------
+
+func (s *PostgresStore) CreateUserAccount(*UserAccount) error {
+	return fmt.Errorf("not implemented yet")
+}
+
+func (s *PostgresStore) DeleteUserAccount(int) error {
+	return fmt.Errorf("not implemented yet")
+}
+
+func (s *PostgresStore) UpdateUserAccount(*UserAccount) error {
+	return fmt.Errorf("not implemented yet")
+}
+
+func (s *PostgresStore) GetUserAccountByID(int) (*UserAccount, error) {
+	return nil, fmt.Errorf("not implemented yet")
+}
+
+func (s *PostgresStore) GetUserAccounts() ([]*UserAccount, error) {
+	return nil, fmt.Errorf("not implemented yet")
+}
+
+//----------------------------------------------------------------------------------------------------------

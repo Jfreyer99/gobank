@@ -4,15 +4,19 @@ import (
 	"time"
 )
 
+// Transfer related Types and Constructor
+//
+// -----------------------------------------------------------------------------
 type CreateTransferRequest struct {
 	ToAccount int `json:"toAccount"`
 	Amount    int `json:"amount"`
 }
 
-type CreateAccountRequest struct {
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-}
+//-----------------------------------------------------------------------------
+
+//	Account related Types and Constructor
+//
+//-----------------------------------------------------------------------------
 
 type Account struct {
 	ID        int       `json:"id"`
@@ -23,9 +27,6 @@ type Account struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-type LoginRequest struct {
-}
-
 func NewAccount(firstName, lastName string) *Account {
 	return &Account{
 		FirstName: firstName,
@@ -33,3 +34,35 @@ func NewAccount(firstName, lastName string) *Account {
 		CreatedAt: time.Now().UTC(),
 	}
 }
+
+type CreateAccountRequest struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+}
+
+//-----------------------------------------------------------------------------
+
+//	UserAccount related Types and Constructor
+//
+// -----------------------------------------------------------------------------
+type UserAccount struct {
+	ID       int    `json:"id"`
+	Email    string `json:"email"`
+	PassHash string `json:"passHash"`
+	SaltHash string `json:"saltHash"`
+}
+
+func NewUserAccount(email, passhash, salthash string) *UserAccount {
+	return &UserAccount{
+		Email:    email,
+		PassHash: passhash,
+		SaltHash: salthash,
+	}
+}
+
+type CreateUserAccountRequest struct {
+	Email    string
+	Password string
+}
+
+// -----------------------------------------------------------------------------
