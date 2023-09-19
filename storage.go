@@ -20,6 +20,7 @@ type AccountStorage interface {
 	CreateAccount(*Account) error
 	DeleteAccount(int) error
 	UpdateAccount(*Account) error
+	// ADD ACCOUNT NUMBER TO PARAMETERS FOR UNIQUE IDENTIFIER
 	GetAccountByID(int) (*Account, error)
 	GetAccounts() ([]*Account, error)
 }
