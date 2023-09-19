@@ -12,17 +12,24 @@ import (
 // -------------------------------------------------------------------------------------------------------
 // Contains only defintion of Storage interface
 type Storage interface {
-	CreateUserAccount(*UserAccount) error
-	DeleteUserAccount(int) error
-	UpdateUserAccount(*UserAccount) error
-	GetUserAccountByID(int) (*UserAccount, error)
-	GetUserAccounts() ([]*UserAccount, error)
+	AccountStorage
+	UserAccountStorage
+}
 
+type AccountStorage interface {
 	CreateAccount(*Account) error
 	DeleteAccount(int) error
 	UpdateAccount(*Account) error
 	GetAccountByID(int) (*Account, error)
 	GetAccounts() ([]*Account, error)
+}
+
+type UserAccountStorage interface {
+	CreateUserAccount(*UserAccount) error
+	DeleteUserAccount(int) error
+	UpdateUserAccount(*UserAccount) error
+	GetUserAccountByID(int) (*UserAccount, error)
+	GetUserAccounts() ([]*UserAccount, error)
 }
 
 // ----------------------------------------------------------------------------------------------------------
