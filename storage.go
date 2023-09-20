@@ -11,6 +11,7 @@ import (
 
 // -------------------------------------------------------------------------------------------------------
 // Contains only defintion of Storage interface
+// Could use Generics interface{} or any with the reflection api to determine fields of a passed in struct that represents the relation in postgres
 type Storage interface {
 	AccountStorage
 	UserAccountStorage
@@ -317,24 +318,104 @@ func (s *PostgresStore) GetAccounts() ([]*Account, error) {
 // Implementation of Account Methods of Interface Storage
 //----------------------------------------------------------------------------------------------------------
 
-func (s *PostgresStore) CreateUserAccount(*UserAccount) error {
-	return fmt.Errorf("not implemented yet")
+func (s *PostgresStore) CreateUserAccount(u *UserAccount) error {
+
+	stmt, err := s.db.Prepare("INSERT INTO USERACCOUNT(email, passhash, salthash) VALUES($1,$2,$3) RETURNING account_id")
+
+	if err != nil {
+		return err
+	}
+
+	row := stmt.QueryRow(u.Email, u.PassHash, u.SaltHash).Scan(&u.ID)
+
+	if row != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (s *PostgresStore) DeleteUserAccount(int) error {
-	return fmt.Errorf("not implemented yet")
+func (s *PostgresStore) DeleteUserAccount(id int) error {
+
+	//Needs to cascade delete because of references to account table, testing this scenario is nessecary
+	stmt, err := s.db.Prepare("DELETE FROM USERACCOUNT WHERE account_id = $1")
+
+	if err != nil {
+		return err
+	}
+
+	rerr := stmt.QueryRow(id).Scan()
+
+	if rerr != nil {
+		return rerr
+	}
+
+	return nil
 }
 
 func (s *PostgresStore) UpdateUserAccount(*UserAccount) error {
 	return fmt.Errorf("not implemented yet")
 }
 
-func (s *PostgresStore) GetUserAccountByID(int) (*UserAccount, error) {
-	return nil, fmt.Errorf("not implemented yet")
+func (s *PostgresStore) GetUserAccountByID(id int) (*UserAccount, error) {
+
+	stmt, err := s.db.Prepare("SELECT * FROM USERACCOUNT WHERE account_id = $1")
+
+	if err != nil {
+		return nil, err
+	}
+
+	userAccount := &UserAccount{}
+
+	err = stmt.QueryRow(id).Scan(
+		&userAccount.ID,
+		&userAccount.Email,
+		&userAccount.PassHash,
+		&userAccount.SaltHash,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return userAccount, nil
 }
 
 func (s *PostgresStore) GetUserAccounts() ([]*UserAccount, error) {
-	return nil, fmt.Errorf("not implemented yet")
+
+	stmt, err := s.db.Prepare("SELECT * FROM USERACCOUNT WHERE account_id = $1")
+
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := stmt.Query()
+
+	if err != nil {
+		return nil, err
+	}
+
+	userAccounts := make([]*UserAccount, 0)
+
+	for rows.Next() {
+
+		userAccount := &UserAccount{}
+
+		err := rows.Scan(
+			userAccount.ID,
+			userAccount.Email,
+			userAccount.PassHash,
+			userAccount.SaltHash,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		userAccounts = append(userAccounts, userAccount)
+	}
+
+	return userAccounts, nil
 }
 
 //----------------------------------------------------------------------------------------------------------
