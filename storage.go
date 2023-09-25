@@ -19,10 +19,9 @@ type Storage interface {
 
 type AccountStorage interface {
 	CreateAccount(*Account) error
-	DeleteAccount(int) error
+	DeleteAccount(id, number int) error
 	UpdateAccount(*Account) error
-	// ADD ACCOUNT NUMBER TO PARAMETERS FOR UNIQUE IDENTIFIER
-	GetAccountByID(int) (*Account, error)
+	GetAccountByIDAndNumber(id, number int) (*Account, error)
 	GetAccounts() ([]*Account, error)
 }
 
@@ -193,7 +192,7 @@ func (s *PostgresStore) printAccountTable() error {
 func (s *PostgresStore) CreateAccount(a *Account) error {
 
 	stmt, err := s.db.Prepare(
-		`INSERT INTO ACCOUNT(last_name, first_name, balance, created_at) 
+		`INSERT INTO ACCOUNT(account_id, last_name, first_name, balance, created_at) 
 		VALUES($1,$2,$3,$4) RETURNING account_id, account_number`)
 	if err != nil {
 		return err
@@ -202,6 +201,7 @@ func (s *PostgresStore) CreateAccount(a *Account) error {
 	defer stmt.Close()
 
 	reerr := stmt.QueryRow(
+		a.ID,
 		a.LastName,
 		a.FirstName,
 		a.Balance,
@@ -215,17 +215,17 @@ func (s *PostgresStore) CreateAccount(a *Account) error {
 	return nil
 }
 
-func (s *PostgresStore) DeleteAccount(id int) error {
+func (s *PostgresStore) DeleteAccount(id, number int) error {
 
 	stmt, err := s.db.Prepare(
-		"DELETE FROM ACCOUNT WHERE account_id = $1")
+		"DELETE FROM ACCOUNT WHERE account_id = $1 AND account_number = $2")
 	if err != nil {
 		return err
 	}
 
 	defer stmt.Close()
 
-	res, err := stmt.Exec(id)
+	res, err := stmt.Exec(id, number)
 
 	if err != nil {
 		return err
@@ -247,10 +247,10 @@ func (s *PostgresStore) UpdateAccount(a *Account) error {
 	return nil
 }
 
-func (s *PostgresStore) GetAccountByID(id int) (*Account, error) {
+func (s *PostgresStore) GetAccountByIDAndNumber(id, number int) (*Account, error) {
 
 	//Cache the stmt somewhere
-	stmt, err := s.db.Prepare("SELECT * FROM ACCOUNT WHERE account_id = $1")
+	stmt, err := s.db.Prepare("SELECT * FROM ACCOUNT WHERE account_id = $1 AND account_number = $2")
 
 	if err != nil {
 		return nil, err
@@ -259,7 +259,7 @@ func (s *PostgresStore) GetAccountByID(id int) (*Account, error) {
 	defer stmt.Close()
 
 	account := &Account{}
-	reerr := stmt.QueryRow(id).Scan(
+	reerr := stmt.QueryRow(id, number).Scan(
 		&account.ID,
 		&account.LastName,
 		&account.FirstName,
@@ -383,7 +383,7 @@ func (s *PostgresStore) GetUserAccountByID(id int) (*UserAccount, error) {
 
 func (s *PostgresStore) GetUserAccounts() ([]*UserAccount, error) {
 
-	stmt, err := s.db.Prepare("SELECT * FROM USERACCOUNT WHERE account_id = $1")
+	stmt, err := s.db.Prepare("SELECT * FROM USERACCOUNT")
 
 	if err != nil {
 		return nil, err
@@ -402,10 +402,10 @@ func (s *PostgresStore) GetUserAccounts() ([]*UserAccount, error) {
 		userAccount := &UserAccount{}
 
 		err := rows.Scan(
-			userAccount.ID,
-			userAccount.Email,
-			userAccount.PassHash,
-			userAccount.SaltHash,
+			&userAccount.ID,
+			&userAccount.Email,
+			&userAccount.PassHash,
+			&userAccount.SaltHash,
 		)
 
 		if err != nil {

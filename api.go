@@ -40,9 +40,9 @@ func (s *APIServer) Run() {
 
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleGetAccount)).Methods(http.MethodGet)
 
-	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleCreateAccount)).Methods(http.MethodPost)
+	router.HandleFunc("/userAccount", makeHTTPHandleFunc(s.handleCreateUserAccount)).Methods(http.MethodPost)
 
-	router.HandleFunc("/account/{id}", WithJWTAuth(makeHTTPHandleFunc(s.handleGetAccountByID), s.store)).Methods(http.MethodGet)
+	router.HandleFunc("/account/{id}/{number}", WithJWTAuth(makeHTTPHandleFunc(s.handleGetAccountByIDAndNumber), s.store)).Methods(http.MethodGet)
 
 	router.HandleFunc("/transfer",
 		makeHTTPHandleFunc(s.handleTransfer)).Methods(http.MethodPost)
@@ -55,11 +55,17 @@ func (s *APIServer) Run() {
 	http.ListenAndServe(s.listenAddr, router)
 }
 
-func (s *APIServer) handleGetAccountByID(w http.ResponseWriter, r *http.Request) error {
+func (s *APIServer) handleGetAccountByIDAndNumber(w http.ResponseWriter, r *http.Request) error {
 	//account := NewAccount("jonas", "ff")
 	id := GetID(r)
+	numberStr := mux.Vars(r)["number"]
 
-	account, err := s.store.GetAccountByID(id)
+	number, err := strconv.Atoi(numberStr)
+	if err != nil {
+		return fmt.Errorf("no account number provided")
+	}
+
+	account, err := s.store.GetAccountByIDAndNumber(id, number)
 
 	if err != nil {
 		return err
@@ -84,31 +90,35 @@ func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) err
 }
 
 // Refactor and dont create JWT here only in Route handleCreateUserAccount
-func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error {
-	createAccountRequest := &CreateAccountRequest{}
+func (s *APIServer) handleCreateUserAccount(w http.ResponseWriter, r *http.Request) error {
+	createUserAccountRequest := &CreateUserAccountRequest{}
 
-	if err := json.NewDecoder(r.Body).Decode(createAccountRequest); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(createUserAccountRequest); err != nil {
 		return err
 	}
 
 	defer r.Body.Close()
 
-	account := NewAccount(createAccountRequest.FirstName, createAccountRequest.LastName)
-	err := s.store.CreateAccount(account)
+	// TODO Hash the password and salt acordindly and generate a proper salt using bycypt
+	salt := "fasdfasdfasfdasfd"
+
+	userAccount := NewUserAccount(createUserAccountRequest.Email, createUserAccountRequest.Password, salt)
+	err := s.store.CreateUserAccount(userAccount)
 	if err != nil {
 		return err
 	}
 
-	tokenString, err := CreateJWT(account)
+	tokenString, err := CreateJWT(userAccount)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println(tokenString)
 
-	return WriteJSON(w, http.StatusOK, account)
+	return WriteJSON(w, http.StatusOK, userAccount)
 }
 
+// Add number to request Parameter for unique identification of Account PK(account_id, account_number)
 func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) error {
 
 	idStr := mux.Vars(r)["id"]
@@ -117,11 +127,17 @@ func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) 
 		return err
 	}
 
+	numberStr := mux.Vars(r)["number"]
+	number, err := strconv.Atoi(numberStr)
+	if err != nil {
+		return err
+	}
+
 	if id < 1 {
 		return fmt.Errorf("cannot Delete Account with ID less than 1")
 	}
 
-	rerr := s.store.DeleteAccount(id)
+	rerr := s.store.DeleteAccount(id, number)
 	if rerr != nil {
 		return rerr
 	}
@@ -170,7 +186,7 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store Storage) http.HandlerFunc {
 			return
 		}
 
-		account, err := store.GetAccountByID(claimID)
+		account, err := store.GetUserAccountByID(claimID)
 		if err != nil {
 			PermissionDenied(w)
 			return
@@ -186,7 +202,7 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store Storage) http.HandlerFunc {
 	}
 }
 
-func CreateJWT(account *Account) (string, error) {
+func CreateJWT(userAccount *UserAccount) (string, error) {
 
 	secret := os.Getenv("JWT_SECRET")
 
@@ -196,7 +212,7 @@ func CreateJWT(account *Account) (string, error) {
 		ExpiresAt: &jwt.NumericDate{Time: time.Now().Add(time.Hour * 24).UTC()},
 		IssuedAt:  &jwt.NumericDate{Time: time.Now().UTC()},
 		Issuer:    "GoBank",
-		ID:        strconv.Itoa(account.ID),
+		ID:        strconv.Itoa(userAccount.ID),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

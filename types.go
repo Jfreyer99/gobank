@@ -61,8 +61,8 @@ func NewUserAccount(email, passhash, salthash string) *UserAccount {
 }
 
 type CreateUserAccountRequest struct {
-	Email    string
-	Password string
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // -----------------------------------------------------------------------------
