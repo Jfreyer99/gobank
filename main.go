@@ -4,11 +4,14 @@ import (
 	"crypto/rand"
 	"log"
 	"math/big"
+
+	"github.com/Jfreyer99/gobank/api"
+	"github.com/Jfreyer99/gobank/storage"
 	//"fmt"
 )
 
 func main() {
-	store, err := NewPostgresStore()
+	store, err := storage.NewPostgresStore()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -22,7 +25,7 @@ func main() {
 
 	defer store.Close()
 
-	server := NewAPIServer(":3000", store)
+	server := api.NewAPIServer(":3000", store)
 	server.Run()
 }
 
