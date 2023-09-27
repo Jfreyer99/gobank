@@ -169,7 +169,7 @@ func (s *PostgresStore) CreateAccount(a *types.Account) error {
 
 	stmt, err := s.db.Prepare(
 		`INSERT INTO ACCOUNT(account_id, last_name, first_name, balance, created_at) 
-		VALUES($1,$2,$3,$4) RETURNING account_id, account_number`)
+		VALUES($1,$2,$3,$4,$5) RETURNING account_number`)
 	if err != nil {
 		return err
 	}
@@ -182,7 +182,7 @@ func (s *PostgresStore) CreateAccount(a *types.Account) error {
 		a.FirstName,
 		a.Balance,
 		a.CreatedAt,
-	).Scan(&a.ID, &a.Number)
+	).Scan(&a.Number)
 
 	if reerr != nil {
 		return reerr

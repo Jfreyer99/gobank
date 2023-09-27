@@ -33,16 +33,16 @@ func (s *APIServer) Run() {
 	router.HandleFunc("/login", makeHTTPHandleFunc(s.handleLogin)).Methods(http.MethodGet)
 
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleGetAccount)).Methods(http.MethodGet)
+	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleGetAccount)).Methods(http.MethodGet)
+	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleCreateAccount)).Methods(http.MethodPost)
+	router.HandleFunc("/account/{id}/{number}", WithJWTAuth(makeHTTPHandleFunc(s.handleGetAccountByIDAndNumber), s.store)).Methods(http.MethodGet)
+	router.HandleFunc("/account/{id}/{number}", makeHTTPHandleFunc(s.handleDeleteAccount)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/userAccount", makeHTTPHandleFunc(s.handleCreateUserAccount)).Methods(http.MethodPost)
+	router.HandleFunc("/userAccount/{id}", makeHTTPHandleFunc(s.handleGetUserAccount)).Methods(http.MethodGet)
+	router.HandleFunc("/userAccount/{id}", makeHTTPHandleFunc(s.handleDeleteUserAccount)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/account/{id}/{number}", WithJWTAuth(makeHTTPHandleFunc(s.handleGetAccountByIDAndNumber), s.store)).Methods(http.MethodGet)
-
-	router.HandleFunc("/transfer",
-		makeHTTPHandleFunc(s.handleTransfer)).Methods(http.MethodPost)
-
-	router.HandleFunc("/account/{id}",
-		makeHTTPHandleFunc(s.handleDeleteAccount)).Methods(http.MethodDelete)
+	router.HandleFunc("/transfer", makeHTTPHandleFunc(s.handleTransfer)).Methods(http.MethodPost)
 
 	log.Println("JSON API Running on Port: ", s.listenAddr)
 

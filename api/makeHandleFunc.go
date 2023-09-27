@@ -28,14 +28,14 @@ func makeHTTPHandleFunc(f apiFunc) http.HandlerFunc {
 	}
 }
 
-func GetID(r *http.Request) int {
-	idStr := mux.Vars(r)["id"]
+func GetNumberParam(r *http.Request, param string) (int, error) {
+	idStr := mux.Vars(r)[param]
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		return -1
+		return 0, err
 	}
-	return id
+	return id, nil
 }
 
 func PermissionDenied(w http.ResponseWriter) {

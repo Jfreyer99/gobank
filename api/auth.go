@@ -43,7 +43,11 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store storage.Storage) http.Handl
 			return
 		}
 
-		id := GetID(r)
+		id, err := GetNumberParam(r, "id")
+		if err != nil {
+			WriteJSON(w, http.StatusBadRequest, fmt.Errorf("conversion went wrong"))
+			return
+		}
 		if id != account.ID {
 			PermissionDenied(w)
 			return
