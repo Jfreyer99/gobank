@@ -19,10 +19,10 @@ func (s *APIServer) handleCreateUserAccount(w http.ResponseWriter, r *http.Reque
 	defer r.Body.Close()
 
 	// TODO Hash the password and salt acordindly and generate a proper salt using bycypt
-	salt := "fasdfasdfasfdasfd"
+	p, err := HashPassword(createUserAccountRequest.Password)
 
-	userAccount := types.NewUserAccount(createUserAccountRequest.Email, createUserAccountRequest.Password, salt)
-	err := s.store.CreateUserAccount(userAccount)
+	userAccount := types.NewUserAccount(createUserAccountRequest.Email, p)
+	err = s.store.CreateUserAccount(userAccount)
 	if err != nil {
 		return err
 	}

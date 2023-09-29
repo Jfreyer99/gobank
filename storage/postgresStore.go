@@ -78,8 +78,7 @@ func (s *PostgresStore) CreateUserAccountTable() error {
 		CREATE TABLE IF NOT EXISTS USERACCOUNT (
 		account_id INT GENERATED ALWAYS AS IDENTITY,
 		email VARCHAR(70) NOT NULL,
-		passhash VARCHAR(100) NOT NULL,
-		salthash VARCHAR(100) NOT NULL,
+		passhash VARCHAR(150) NOT NULL,
 		PRIMARY KEY(account_id)
 	);`
 	_, err := s.db.Exec(query)
@@ -296,13 +295,13 @@ func (s *PostgresStore) GetAccounts() ([]*types.Account, error) {
 
 func (s *PostgresStore) CreateUserAccount(u *types.UserAccount) error {
 
-	stmt, err := s.db.Prepare("INSERT INTO USERACCOUNT(email, passhash, salthash) VALUES($1,$2,$3) RETURNING account_id")
+	stmt, err := s.db.Prepare("INSERT INTO USERACCOUNT(email, passhash) VALUES($1,$2) RETURNING account_id")
 
 	if err != nil {
 		return err
 	}
 
-	row := stmt.QueryRow(u.Email, u.PassHash, u.SaltHash).Scan(&u.ID)
+	row := stmt.QueryRow(u.Email, u.PassHash).Scan(&u.ID)
 
 	if row != nil {
 		return err
@@ -347,7 +346,6 @@ func (s *PostgresStore) GetUserAccountByID(id int) (*types.UserAccount, error) {
 		&userAccount.ID,
 		&userAccount.Email,
 		&userAccount.PassHash,
-		&userAccount.SaltHash,
 	)
 
 	if err != nil {
@@ -381,7 +379,6 @@ func (s *PostgresStore) GetUserAccounts() ([]*types.UserAccount, error) {
 			&userAccount.ID,
 			&userAccount.Email,
 			&userAccount.PassHash,
-			&userAccount.SaltHash,
 		)
 
 		if err != nil {
