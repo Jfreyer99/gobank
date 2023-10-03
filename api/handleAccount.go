@@ -24,6 +24,8 @@ func (s *APIServer) handleGetAccountByIDAndNumber(w http.ResponseWriter, r *http
 		return fmt.Errorf("no account number provided")
 	}
 
+	defer r.Body.Close()
+
 	account, err := s.store.GetAccountByIDAndNumber(id, number)
 
 	if err != nil {
@@ -36,6 +38,8 @@ func (s *APIServer) handleGetAccountByIDAndNumber(w http.ResponseWriter, r *http
 func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) error {
 
 	accounts, err := s.store.GetAccounts()
+
+	defer r.Body.Close()
 
 	if err != nil {
 		return WriteJSON(w, http.StatusNotFound, err)
@@ -82,12 +86,26 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 	return WriteJSON(w, http.StatusCreated, account)
 }
 
+func (s *APIServer) handleGetAllAccount(w http.ResponseWriter, r *http.Request) error {
+
+	accounts, err := s.store.GetAccounts()
+	if err != nil {
+		return err
+	}
+
+	defer r.Body.Close()
+
+	return WriteJSON(w, http.StatusOK, accounts)
+}
+
 func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) error {
 
 	id, err := GetNumberParam(r, "id")
 	if err != nil {
 		return err
 	}
+
+	defer r.Body.Close()
 
 	number, err := GetNumberParam(r, "number")
 	if err != nil {

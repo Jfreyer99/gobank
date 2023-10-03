@@ -71,6 +71,8 @@ func (s *APIServer) handleDeleteUserAccount(w http.ResponseWriter, r *http.Reque
 		return nil
 	}
 
+	defer r.Body.Close()
+
 	if err := s.store.DeleteUserAccount(id); err != nil {
 		return err
 	}
