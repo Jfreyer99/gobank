@@ -26,5 +26,6 @@ type UserAccountStorage interface {
 	DeleteUserAccount(int) error
 	UpdateUserAccount(*types.UserAccount) error
 	GetUserAccountByID(int) (*types.UserAccount, error)
+	GetUserAccountByEmail(string) (*types.UserAccount, error)
 	GetUserAccounts() ([]*types.UserAccount, error)
 }

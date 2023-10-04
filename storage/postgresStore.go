@@ -224,7 +224,6 @@ func (s *PostgresStore) UpdateAccount(a *types.Account) error {
 
 func (s *PostgresStore) GetAccountByIDAndNumber(id, number int) (*types.Account, error) {
 
-	//Cache the stmt somewhere
 	stmt, err := s.db.Prepare("SELECT * FROM ACCOUNT WHERE account_id = $1 AND account_number = $2")
 
 	if err != nil {
@@ -343,6 +342,29 @@ func (s *PostgresStore) GetUserAccountByID(id int) (*types.UserAccount, error) {
 	userAccount := &types.UserAccount{}
 
 	err = stmt.QueryRow(id).Scan(
+		&userAccount.ID,
+		&userAccount.Email,
+		&userAccount.PassHash,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return userAccount, nil
+}
+
+func (s *PostgresStore) GetUserAccountByEmail(email string) (*types.UserAccount, error) {
+
+	stmt, err := s.db.Prepare("SELECT * FROM USERACCOUNT WHERE email = $1")
+
+	if err != nil {
+		return nil, err
+	}
+
+	userAccount := &types.UserAccount{}
+
+	err = stmt.QueryRow(email).Scan(
 		&userAccount.ID,
 		&userAccount.Email,
 		&userAccount.PassHash,

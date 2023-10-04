@@ -30,7 +30,8 @@ func (s *APIServer) Run() {
 
 	// Try improving by using HandleFunc().Method("Get")
 
-	router.HandleFunc("/login", makeHTTPHandleFunc(s.handleLogin)).Methods(http.MethodGet)
+	router.HandleFunc("/login", makeHTTPHandleFunc(s.handleLogin)).Methods(http.MethodPost)
+	router.HandleFunc("/register", makeHTTPHandleFunc(s.handleRegister)).Methods(http.MethodPost)
 
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleGetAccount)).Methods(http.MethodGet)
 	router.HandleFunc("/allAccount", makeHTTPHandleFunc(s.handleGetAllAccount)).Methods(http.MethodGet)
@@ -38,7 +39,6 @@ func (s *APIServer) Run() {
 	router.HandleFunc("/account/{id}/{number}", WithJWTAuth(makeHTTPHandleFunc(s.handleGetAccountByIDAndNumber), s.store)).Methods(http.MethodGet)
 	router.HandleFunc("/account/{id}/{number}", makeHTTPHandleFunc(s.handleDeleteAccount)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/userAccount", makeHTTPHandleFunc(s.handleCreateUserAccount)).Methods(http.MethodPost)
 	router.HandleFunc("/userAccount/{id}", makeHTTPHandleFunc(s.handleGetUserAccount)).Methods(http.MethodGet)
 	router.HandleFunc("/userAccount/{id}", makeHTTPHandleFunc(s.handleDeleteUserAccount)).Methods(http.MethodDelete)
 

@@ -1,12 +1,73 @@
 package api
 
-import "net/http"
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strconv"
 
-// TODO
-// CREATE loginrequest struct
-// CHECK Headers for x-jwt-token to authenticate
-// IF not headers provided check database for user and compare password hashes
-// IF they match create new jwt and send back to client to store as cookie
+	"github.com/Jfreyer99/gobank/types"
+	"github.com/golang-jwt/jwt/v5"
+)
+
 func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
+
+	loginReq := &types.LoginUserAccountRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(loginReq); err != nil {
+		return err
+	}
+
+	login := types.NewUserAccount(loginReq.Email, loginReq.Password)
+
+	tokenString := r.Header.Get("x-jwt-token")
+
+	if len(tokenString) == 0 {
+
+		fmt.Println("no jwt token provided")
+
+		userAccount, err := s.store.GetUserAccountByEmail(login.Email)
+		if err != nil {
+			return err
+		}
+
+		ok := CheckPasswordHash(login.PassHash, userAccount.PassHash)
+		if !ok {
+			return WriteJSON(w, http.StatusBadRequest, map[string]bool{"success": false})
+		}
+
+		tokenString, err := CreateJWT(userAccount)
+		if err != nil {
+			return WriteJSON(w, http.StatusBadRequest, map[string]bool{"success": false})
+		}
+
+		fmt.Println(tokenString)
+
+		return WriteJSON(w, http.StatusOK, tokenString)
+	}
+
+	fmt.Println("jwt token provided")
+
+	token, err := ValidateJWT(tokenString)
+	if err != nil {
+		return err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return WriteJSON(w, http.StatusBadRequest, map[string]bool{"success": false})
+	}
+
+	claimIDStr := claims["jti"].(string)
+	claimID, err := strconv.Atoi(claimIDStr)
+	if err != nil {
+		return WriteJSON(w, http.StatusBadRequest, map[string]bool{"success": false})
+	}
+
+	_, err = s.store.GetUserAccountByID(claimID)
+	if err != nil {
+		return WriteJSON(w, http.StatusBadRequest, map[string]bool{"success": false})
+	}
+
 	return nil
 }
