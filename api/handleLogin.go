@@ -68,5 +68,5 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		return WriteJSON(w, http.StatusBadRequest, map[string]bool{"success": false})
 	}
 
-	return WriteJSON(w, http.StatusAccepted, acc)
+	return WriteJSON(w, http.StatusAccepted, acc)   
 }
