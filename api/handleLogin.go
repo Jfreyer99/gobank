@@ -31,8 +31,9 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 			return err
 		}
 
-		ok := CheckPasswordHash(login.PassHash, userAccount.PassHash)
+		ok := CheckPasswordHash(userAccount.PassHash, login.PassHash)
 		if !ok {
+			fmt.Println("No user with password")
 			return WriteJSON(w, http.StatusBadRequest, map[string]bool{"success": false})
 		}
 
@@ -45,8 +46,6 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 
 		return WriteJSON(w, http.StatusOK, tokenString)
 	}
-
-	fmt.Println("jwt token provided")
 
 	token, err := ValidateJWT(tokenString)
 	if err != nil {
@@ -64,10 +63,10 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		return WriteJSON(w, http.StatusBadRequest, map[string]bool{"success": false})
 	}
 
-	_, err = s.store.GetUserAccountByID(claimID)
+	acc, err := s.store.GetUserAccountByID(claimID)
 	if err != nil {
 		return WriteJSON(w, http.StatusBadRequest, map[string]bool{"success": false})
 	}
 
-	return nil
+	return WriteJSON(w, http.StatusAccepted, acc)
 }
